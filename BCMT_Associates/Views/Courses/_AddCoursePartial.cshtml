@@ -1,0 +1,108 @@
+﻿@model BCMT_Associates.Models.Course
+
+<form id="addCourseForm">
+    <div class="mb-3">
+        <label>Course Name</label>
+        <input type="text" class="form-control" name="Name" required />
+    </div>
+    <div class="mb-3">
+        <label>Description</label>
+        <textarea class="form-control" name="Description" required></textarea>
+    </div>
+    <div class="mb-3">
+        <label>Course Image</label>
+        <input type="file" class="form-control" name="ImageData" required />
+    </div>
+    <div class="form-check mb-3">
+        <!-- Hidden input to always pass a value for IsVisibleOnMainPage -->
+        <input type="hidden" name="IsVisibleOnMainPage" value="false" />
+        <input type="checkbox" class="form-check-input" name="IsVisibleOnMainPage" id="IsVisibleOnMainPage" value="true" />
+        <label class="form-check-label" for="IsVisibleOnMainPage">Visible on Main Page</label>
+    </div>
+
+
+    <button type="submit" class="btn btn-success">Save</button>
+</form>
+
+<script>
+    $(document).off("submit", "#addCourseForm").on("submit", "#addCourseForm", function (e) {
+
+        e.preventDefault();
+        // Manually handle checkbox value before submitting
+        var isChecked = $('#IsVisibleOnMainPage').prop('checked'); // true or false
+        // If checked, set 'IsVisibleOnMainPage' to true, otherwise false
+        $("input[name='IsVisibleOnMainPage']").val(isChecked ? "true" : "false");
+
+        // Create FormData object with the updated checkbox value
+        var formData = new FormData(this);
+
+        // Log formData to see what’s being sent for checking
+        for (var pair of formData.entries()) {
+            console.log(pair[0] + ', ' + pair[1]);
+        }
+
+
+        $.ajax({
+            url: "/Courses/Add",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                console.log(response); // Log the server response to see if there’s any error message
+
+                if (response.success) {
+                    $('#CreateModal').modal('hide');
+
+                    var newCard = `
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-4" id="course-${response.course.id}">
+            <div class="card shadow-lg border-0 rounded-4">
+                <!-- Course Image -->
+                <div class="card-img-container">
+                    <img
+                        src="${response.course.imageData ? `data:image/png;base64,${response.course.imageData}` : '/path/to/default-image.jpg'}"
+                        class="card-img-top rounded-top-4 fixed-image-size"
+                        alt="${response.course.name}">
+                </div>
+                <!-- Course Details -->
+                <div class="card-body p-4">
+                    <h5 class="card-title text-primary fw-bold"> <strong>Course Name:</strong> ${response.course.name}</h5>
+                    <p class="card-text text-secondary small"> <strong>Description:</strong> ${response.course.description}</p>
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between">
+                        <!-- Edit Button -->
+                        <button
+                            class="btn btn-warning text-white btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#EditModal"
+                            data-id="${response.course.id}">
+                            <i class="bi bi-pencil-square"></i> Edit
+                        </button>
+                        <!-- Delete Button -->
+                        <button
+                            class="btn btn-danger text-white btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#DeleteModal"
+                            data-id="${response.course.id}">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+                    $('#courseId').append(newCard);
+
+
+
+                } else {
+                    alert("Error adding course.");
+                }
+            },
+            error: function () {
+                alert("An error occurred.");
+            }
+        });
+    });
+</script>
+
+

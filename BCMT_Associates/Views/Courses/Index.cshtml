@@ -1,0 +1,225 @@
+﻿@model IEnumerable<BCMT_Associates.Models.Course>
+
+    <head>
+    <style>      
+
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+            .card:hover {
+                transform: scale(1.05);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            }
+
+        .btn-sm {
+            font-size: 0.875rem;
+        }
+
+        .text-primary {
+            color: #0056b3 !important;
+        }
+
+        .text-secondary {
+            color: #6c757d !important;
+        }
+
+        /* Container for consistent image dimensions */
+        .card-img-container {
+            width: 100%;
+            height: 200px; /* Fixed height for all images */
+            overflow: hidden; /* Ensures no content overflows the container */
+        }
+
+        /* Image styling */
+        .fixed-image-size {
+            width: 100%; /* Ensures the image fills the width of the container */
+            height: 100%; /* Ensures the image fills the height of the container */
+            object-fit: cover; /* Ensures the image scales and crops proportionally */
+            border-top-left-radius: 0.75rem; /* Matches card's rounded corners */
+            border-top-right-radius: 0.75rem;
+        }
+    </style>
+</head>
+
+
+
+<div class="m-portlet m-portlet--mobile shadow-lg border-0 rounded-4 bg-light">
+    <!-- Courses Section Header -->
+    <div class="m-portlet__head bg-light">
+        <!-- Title Section -->
+        <div class="m-portlet__head-caption bg-light">
+            <div class="m-portlet__head-title">
+                <h1 class=" text-primary">
+                    Courses
+                </h1>
+            </div>
+        </div>
+        <!-- Add New Course Button -->
+        <div class="m-portlet__head-tools bg-light">
+            <ul class="m-portlet__nav">
+                <li class="m-portlet__nav-item">
+                    <button class="btn btn-primary m-btn m-btn--custom m-btn--pill m-btn--icon m-btn--air"
+                            data-bs-toggle="modal" data-bs-target="#CreateModal" id="addCourseButton">
+                        <span>
+                            <i class="la la-plus"></i>
+                            <span>New record</span>
+                        </span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Courses Display Section -->
+    <div id="courseId" class="row g-4 p-3 ">
+        @foreach (var course in Model)
+
+        {
+            <!-- Individual Course Card -->
+            <div class="col-lg-3 col-md-6 col-sm-12 mb-4" id="course-@course.Id">
+                <div class="card shadow-lg border-0 rounded-4">
+                    <!-- Course Image -->
+                    <div class="card-img-container">
+                        <img src="@(course.ImageData != null
+                                 ? $"data:image/png;base64,{Convert.ToBase64String(course.ImageData)}"
+                                 : "/path/to/default-image.jpg")"
+                             class="card-img-top rounded-top-4 fixed-image-size"
+                             alt="@course.Name">
+                    </div>
+                    <!-- Course Details -->
+                    <div class="card-body p-4">
+                        <h3 class="card-title text-primary fw-bold"> <strong>Course Name:</strong> @course.Name</h3>
+                        <h4 class="card-text text-secondary "> <strong>Description:</strong> @course.Description</h4>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <!-- Edit Button -->
+                            <button class="btn btn-warning text-white btn-sm"
+                                    data-bs-toggle="modal" data-bs-target="#EditModal" data-id="@course.Id">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </button>
+                            <!-- Delete Button -->
+                            <button class="btn btn-danger text-white btn-sm"
+                                    data-bs-toggle="modal" data-bs-target="#DeleteModal" data-id="@course.Id">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+
+ 
+    
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="EditModal" tabindex="-1" aria-labelledby="EditModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="EditModalLabel">Edit Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="editModalBody">
+                    <!-- Edit form will be loaded here via AJAX -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="DeleteModal" tabindex="-1" aria-labelledby="DeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="DeleteModalLabel">Delete Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="deleteModalBody">
+                    <!-- Delete confirmation will be loaded here via AJAX -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Modal -->
+    <div class="modal fade" id="CreateModal" tabindex="-1" aria-labelledby="CreateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="CreateModalLabel">Add NeW Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="createModalBody">
+                    <!-- Create form will be loaded here via AJAX -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            // **************************** Load Create Form in "Create" Modal ****************************
+            $('[data-bs-target="#CreateModal"]').click(function () {
+                // $(document).on('click', '[data-bs-target="#CreateModal"]', function () {
+            // $(document).on("click", ".btn-primary", function () {
+                $.ajax({
+                    url: '/Courses/Add', // Endpoint for retrieving create form
+                    type: 'GET',
+                    success: function (result) {
+                        $('#createModalBody').html(result); // Load the create form into the modal's body
+                    },
+                    error: function () {
+                        alert('Error loading create form.'); // Show an error message on failure
+                    }
+                });
+            });
+
+
+
+
+            // **************************** Load Delete Confirmation in "Delete" Modal ****************************
+            $(document).on('click', '[data-bs-target="#DeleteModal"]', function () {
+                var courseId = $(this).data('id'); // Get the product ID from the button's data-id attribute
+                $('#DeleteModal').data('product-id', courseId); // Store product ID in modal's data attribute product-id
+
+                $.ajax({
+                    url: '/Courses/Delete/' + courseId, // Endpoint for retrieving delete confirmation
+                    type: 'GET',
+                    success: function (result) {
+                        $('#deleteModalBody').html(result); // Display the delete confirmation in the modal body
+                    },
+                    error: function () {
+                        alert('Error loading delete confirmation.'); // Show an error message on failure
+                    }
+                });
+            });
+
+            // **************************** Load Edit Form in "Edit" Modal ****************************
+            $(document).on('click', '[data-bs-target="#EditModal"]', function () {
+                var courseId = $(this).data('id'); // Get the product ID from the clicked button's data-id attribute
+                $('#EditModal').data('product-id', courseId); // Store product ID in modal's data attribute product-id,use for postt requst
+
+                $.ajax({
+                    url: '/Courses/Edit/' + courseId, // Endpoint for retrieving edit form
+                    type: 'GET',
+                    success: function (result) {
+                        $('#editModalBody').html(result); // Load the edit form into the modal's body
+                    },
+                    error: function () {
+                        alert('Error loading edit form.'); // Show an error message on failure
+                    }
+                });
+            });
+        });
+
+
+    </script>
+}

@@ -1,0 +1,209 @@
+﻿@model IEnumerable<BCMT_Associates.Models.Publication>
+
+    <head>
+    <style>        <style >
+
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-sm {
+            font-size: 0.875rem;
+        }
+
+        .text-primary {
+            color: #0056b3 !important;
+        }
+
+        .text-secondary {
+            color: #6c757d !important;
+        }</style>
+</head>
+
+
+
+
+
+
+<div class="m-portlet m-portlet--mobile shadow-lg border-0 rounded-4 bg-light">
+    <div class="m-portlet__head bg-light text-primary rounded-top-4">
+        <div class="m-portlet__head-caption">
+            <div class="m-portlet__head-title">
+                <h2 class="  text-primary">
+                    Publications
+                </h2>
+            </div>
+        </div>
+        <div class="m-portlet__head-tools ms-auto bg-light">
+            <ul class="m-portlet__nav">
+                <li class="m-portlet__nav-item">
+                    <button class="btn btn-primary m-btn m-btn--custom m-btn--pill m-btn--icon m-btn--air" data-bs-toggle="modal" data-bs-target="#CreateModal" id="addPublicationButton">
+                        <span>
+                            <i class="bi bi-plus-circle"></i>
+                            <span>New Record</span>
+                        </span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Publications List -->
+    <div class="row g-4 p-3" id="publicationsList">
+        @foreach (var publication in Model)
+
+        {
+            <!-- Individual Publication Card -->
+            <div class="col-lg-3 col-md-6 col-sm-12 mb-4" id="publication-@publication.Id">
+                <div class="card shadow-lg border-0 rounded-4 bg-white">
+                    <div class="card-body p-4">
+                        <h3 class="card-title text-primary fw-bold">@publication.Title</h3>
+                        <h4 class="card-text Name text-black mb-1 mt-3">
+                            <strong>Journal:</strong> @publication.JournalName
+                        </h4>
+                        <h4 class="card-text Date  mb-1 text-black mt-3">
+                            <strong>Date:</strong> @publication.DatePublished.ToShortDateString()
+                        </h4>
+
+                        <h4 class="card-text ISSN   mb-3 text-black mt-3">
+                            <strong>ISSN:</strong> @publication.ISSN
+                        </h4>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-warning text-white btn-sm" data-bs-toggle="modal" data-bs-target="#EditModal" data-id="@publication.Id">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </button>
+                            <button class="btn btn-danger text-white btn-sm" data-bs-toggle="modal" data-bs-target="#DeleteModal" data-id="@publication.Id">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+  
+@* <!--Create button (opens modal to show product Create Modals) -->
+<button class="btn btn-outline-warning mt-2 btn-success text-white" data-bs-toggle="modal" data-bs-target="#CreateModal">
+    Add New Publication
+</button> *@
+
+
+
+<!-- Edit Modal -->
+<div class="modal fade" id="EditModal" tabindex="-1" aria-labelledby="EditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="EditModalLabel">Edit Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="editModalBody">
+                <!-- Edit form will be loaded here via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="DeleteModal" tabindex="-1" aria-labelledby="DeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="DeleteModalLabel">Delete Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="deleteModalBody">
+                <!-- Delete confirmation will be loaded here via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="CreateModal" tabindex="-1" aria-labelledby="CreateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="CreateModalLabel">Add New Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="createModalBody">
+                <!-- Create form will be loaded here via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+
+//**************************************************Create Get************************************************************* */
+        $(document).ready(function () {
+            // Load Add Publication Partial View
+            // $('[data-bs-target="#CreateModal"]').click(function () {
+                $(document).on('click', '[data-bs-target="#CreateModal"]', function () {
+
+                $.ajax({
+                    url: '/Publications/Add',
+                    type: 'GET',
+                    success: function (data) {
+                        $('#createModalBody').html(data);
+                    },
+                    error: function () {
+                        alert("Failed to load the add publication view.");
+                    }
+                });
+            });
+
+            //**************************************************Create Edit************************************************************* */
+
+
+            // Load Edit Publication Partial View
+                // $('[data-bs-target="#EditModal"]').click(function () {
+                $(document).on('click', '[data-bs-target="#EditModal"]', function () {
+
+               
+
+                var publicationId = $(this).data('id');
+                $.ajax({
+                    url: '/Publications/Edit/' + publicationId,
+                    type: 'GET',
+                    success: function (data) {
+                        $('#editModalBody').html(data);
+                    },
+                    error: function () {
+                        alert("Failed to load the edit publication view.");
+                    }
+                });
+            });
+            //**************************************************Create Delete************************************************************* */
+
+            // Load Delete Publication Partial View
+                // $('[data-bs-target="#DeleteModal"]').click(function () {
+                $(document).on('click', '[data-bs-target="#DeleteModal"]', function () {
+
+
+                var publicationId = $(this).data('id');
+                $.ajax({
+                    url: '/Publications/Delete/' + publicationId,
+                    type: 'GET',
+                    success: function (data) {
+                        $('#deleteModalBody').html(data);
+                    },
+                    error: function () {
+                        alert("Failed to load the delete publication view.");
+                    }
+                });
+            });
+        });
+    </script>
+}

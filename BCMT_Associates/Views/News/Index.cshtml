@@ -1,0 +1,250 @@
+﻿<style>
+    /* Ensure that each card has equal width and height */
+    .card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-img-top {
+        object-fit: cover;
+        width: 100%;
+        height: 300px; /* Adjust this as needed */
+    }
+
+    .card-body {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    /* If you want to set specific width for the cards */
+    .card-deck .card {
+        width: 100%;
+        max-width: 350px; /* Adjust the max width as needed */
+    }
+
+    .card-text {
+        color: gray; /* Sets the description text color to gray */
+    }
+</style>
+
+
+    <!-- Add News Modal -->
+    <div class="modal fade" id="addNewsModal" tabindex="-1" role="dialog" aria-labelledby="addNewsModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addNewsModalLabel">Add News</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="file" id="mediaFile" accept="image/*, video/*" class="form-control mb-3">
+                    <input type="text" id="title" placeholder="Title" class="form-control mb-3">
+                    <textarea id="description" placeholder="Description" class="form-control mb-3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="saveNewsBtn" class="btn btn-primary">Save News</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- News Display Grid -->
+<div class="m-portlet m-portlet--mobile">
+    <div class="m-portlet__head">
+        <div class="m-portlet__head-caption">
+            <div class="m-portlet__head-title">
+                <h3 class="m-portlet__head-text">
+                    News
+                </h3>
+            </div>
+        </div>
+        <div class="m-portlet__head-tools">
+            <ul class="m-portlet__nav">
+                <li class="m-portlet__nav-item">
+                    <button class="btn btn-accent m-btn m-btn--custom m-btn--pill m-btn--icon m-btn--air" data-bs-toggle="modal" data-bs-target="#addNewsModal" id="addCourseButton">
+                        <span>
+                            <i class="la la-plus"></i>
+                            <span>New record</span>
+                        </span>
+                    </button>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+       @*  <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#addNewsModal">Add News</button> *@
+        <div class="row" id="newsGrid"></div>
+
+
+
+
+    </div>
+
+
+
+
+@section Scripts{
+    <script>
+        $(document).ready(function () {
+            var currentEditingNewsItem = null;
+
+            // Handle Save News button click
+            $('#saveNewsBtn').on('click', function () {
+                var title = $('#title').val();
+                var description = $('#description').val();
+                var mediaFile = $('#mediaFile')[0].files[0];
+
+                if (!title || !description) {
+                    alert('Please fill in all fields.');
+                    return;
+                }
+
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var mediaFileBase64 = e.target.result; // Base64 string of the media file
+                    var mediaTag; // This will hold either an <img> or <video> tag depending on the file type
+
+                    // Check the media type
+                    if (mediaFile && mediaFile.type.startsWith('image/')) {
+                        mediaTag = `<img src="${mediaFileBase64}" class="card-img-top" alt="News Media">`;
+                    } else if (mediaFile && mediaFile.type.startsWith('video/')) {
+                        mediaTag = `<video class="card-img-top" controls>
+                                                <source src="${mediaFileBase64}" type="${mediaFile.type}">
+                                                Your browser does not support the video tag.
+                                            </video>`;
+                    } else {
+                        alert('Unsupported media type. Please upload an image or video.');
+                        return;
+                    }
+
+                    // AJAX call to add or edit the news item
+                    if (currentEditingNewsItem) {
+                        // Edit news item
+                        $.ajax({
+                            url: '/News/EditNews',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({
+                                id: currentEditingNewsItem.id,
+                                title: title,
+                                description: description,
+                                mediaFilePath: mediaFileBase64
+                            }),
+                            success: function (updatedNewsItem) {
+                                var newsItemElement = $(`[data-id="${updatedNewsItem.id}"]`);
+                                newsItemElement.find('.card-img-top').replaceWith(mediaTag); // Replace media
+                                newsItemElement.find('.card-title').text(updatedNewsItem.title);
+                                newsItemElement.find('.card-text').text(updatedNewsItem.description);
+
+                                resetForm();
+                                $('#addNewsModal').modal('hide');
+                                currentEditingNewsItem = null;
+                            },
+                            error: function (error) {
+                                console.error('Error editing news item:', error);
+                            }
+                        });
+                    } else {
+                        // Add new news item
+                        $.ajax({
+                            url: '/News/AddNews',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({
+                                title: title,
+                                description: description,
+                                mediaFilePath: mediaFileBase64
+                            }),
+                            success: function (newNewsItem) {
+                                $('#newsGrid').append(`
+                                            <div class="col-md-4 mb-4" data-id="${newNewsItem.id}">
+                                                <div class="card" style="height: 100%;">
+                                                    ${mediaTag}
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">${newNewsItem.title}</h5>
+                                                        <p class="card-text">${newNewsItem.description}</p>
+                                                        <button class="btn btn-warning btn-sm editNewsBtn" data-id="${newNewsItem.id}">Edit</button>
+                                                        <button class="btn btn-danger btn-sm deleteNewsBtn" data-id="${newNewsItem.id}">Delete</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `);
+                                resetForm();
+                                $('#addNewsModal').modal('hide');
+                                $('.modal-backdrop').remove(); // Remove leftover backdrop
+                            },
+                            error: function (error) {
+                                console.error('Error adding news item:', error);
+                            }
+                        });
+                    }
+                };
+                reader.readAsDataURL(mediaFile); // Convert media file to Base64 string
+            });
+
+            // Handle Edit button click
+            $(document).on('click', '.editNewsBtn', function () {
+                var newsItemId = $(this).data('id');
+
+                $.ajax({
+                    url: '/News/GetNewsItem',
+                    type: 'GET',
+                    data: { id: newsItemId },
+                    success: function (newsItem) {
+                        currentEditingNewsItem = newsItem;
+                        $('#title').val(newsItem.title);
+                        $('#description').val(newsItem.description);
+                        $('#mediaFile').val(''); // Reset file input
+                        $('#addNewsModal').modal('show');
+                    },
+                    error: function (error) {
+                        console.error('Error fetching news item:', error);
+                    }
+                });
+            });
+
+            // Handle Delete button click
+            $(document).on('click', '.deleteNewsBtn', function () {
+                var newsItemId = $(this).data('id');
+
+                $.ajax({
+                    url: '/News/DeleteNews',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(newsItemId),
+                    success: function (response) {
+                        if (response.success) {
+                            $(`[data-id=${newsItemId}]`).remove();
+                        } else {
+                            alert('Failed to delete the news item.');
+                        }
+                    },
+                    error: function (error) {
+                        console.error('Error deleting news item:', error);
+                        alert('An error occurred while deleting the news item.');
+                    }
+                });
+            });
+
+            // Reset the form fields
+            function resetForm() {
+                $('#title').val('');
+                $('#description').val('');
+                $('#mediaFile').val('');
+            }
+        });
+
+
+
+
+
+
+    </script>
+    }
+
+   
